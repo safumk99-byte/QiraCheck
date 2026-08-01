@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Practice{% endblock %}
+
+{% block content %}
+
+<h2>Practice Ayah {{ ayah.ayah_number }}</h2>
+
+<div class="card">
+
+    <div class="card-body">
+
+        <p class="fs-2 text-end">
+            {{ ayah.uthmani_text }}
+        </p>
+
+        <button id="recordBtn"
+                class="btn btn-danger">
+            🎤 Start Recording
+        </button>
+
+    </div>
+
+</div>
+
+{% endblock %}

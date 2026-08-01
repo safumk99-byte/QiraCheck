@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}{{ surah.arabic_name }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/practice.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div class="practice-container">
+
+    <div class="surah-header">
+
+        <div class="surah-info">
+            <h1>{{ surah.arabic_name }}</h1>
+            <p>{{ surah.english_name }}</p>
+        </div>
+
+        <button id="recordBtn" class="record-btn">
+            🎤 Start Practice
+        </button>
+
+    </div>
+
+    <div class="status-bar">
+        Ready to Practice
+    </div>
+
+    <div class="practice-controls">
+
+    <button id="startRecording" class="btn btn-success">
+        🎤 Start Practice
+    </button>
+
+    <button id="stopRecording" class="btn btn-danger" disabled>
+        ⏹ Stop
+    </button>
+
+</div>
+
+<div id="recordingStatus" class="mt-3 text-center">
+
+    Ready to Practice
+
+</div>
+
+<audio id="audioPlayer" controls style="display:none; width:100%; margin-top:20px;"></audio>
+
+    <div class="ayah-list">
+
+        {% for ayah in ayahs %}
+
+        <div class="ayah-card" id="ayah-{{ ayah.ayah_number }}">
+
+            <div class="ayah-number">
+                {{ ayah.ayah_number }}
+            </div>
+
+            <div class="ayah-text">
+                {{ ayah.uthmani_text }}
+            </div>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/practice.js') }}"></script>
+{% endblock %}

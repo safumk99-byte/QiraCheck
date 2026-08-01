@@ -34,4 +34,22 @@ def get_all_surahs():
     cur.close()
     conn.close()
 
-    return surahs    
+    return surahs
+
+def get_ayahs_by_surah(surah_id):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT *
+        FROM ayahs
+        WHERE surah_id = %s
+        ORDER BY ayah_number
+    """, (surah_id,))
+
+    ayahs = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return ayahs    

@@ -15,7 +15,11 @@
     {% for surah in surahs %}
     <tr>
         <td>{{ surah.surah_number }}</td>
-        <td>{{ surah.arabic_name }}</td>
+        <td>
+    <a href="/practice/surah/{{ surah.id }}">
+        {{ surah.arabic_name }}
+    </a>
+</td>
         <td>{{ surah.english_name }}</td>
         <td>{{ surah.ayah_count }}</td>
     </tr>

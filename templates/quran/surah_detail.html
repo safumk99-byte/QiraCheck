@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Surah{% endblock %}
+
+{% block content %}
+
+<h2>Surah</h2>
+
+{% for ayah in ayahs %}
+
+<div class="card mb-3">
+    <div class="card-body">
+
+        <strong>Ayah {{ ayah.ayah_number }}</strong>
+
+        <p class="fs-4 text-end mt-3">
+            {{ ayah.uthmani_text }}
+        </p>
+
+        <a href="/practice/{{ ayah.id }}"
+   class="btn btn-success">
+    Practice
+</a>
+
+    </div>
+</div>
+
+{% endfor %}
+
+{% endblock %}
