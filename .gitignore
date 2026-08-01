@@ -1,0 +1,27 @@
+# Virtual Environment
+venv/
+
+# Python Cache
+__pycache__/
+*.py[cod]
+
+# Environment Variables
+.env
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+
+# Uploads
+uploads/
+
+# Audio Recordings
+static/audio/
+
+# Temporary Files
+*.tmp
