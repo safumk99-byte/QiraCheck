@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+
+<h2>Welcome {{ session.full_name }}</h2>
+<a href="/logout" class="btn btn-danger mt-3">
+    Logout
+</a>
+
+{% endblock %}

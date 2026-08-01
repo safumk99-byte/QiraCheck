@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Surahs</h2>
+
+<table border="1" cellpadding="8">
+    <tr>
+        <th>No.</th>
+        <th>Arabic Name</th>
+        <th>English Name</th>
+        <th>Ayahs</th>
+    </tr>
+
+    {% for surah in surahs %}
+    <tr>
+        <td>{{ surah.surah_number }}</td>
+        <td>{{ surah.arabic_name }}</td>
+        <td>{{ surah.english_name }}</td>
+        <td>{{ surah.ayah_count }}</td>
+    </tr>
+    {% endfor %}
+
+</table>
+
+{% endblock %}
