@@ -1,4 +1,7 @@
-from flask import Blueprint, render_template, request, jsonify, current_app
+from flask import Blueprint, render_template, request, jsonify, current_app, session
+from services.recording_service import save_recitation
+from services.recording_service import save_audio_file
+from services.ai_service import analyze_recitation
 from database import get_all_surahs
 from database import get_ayahs_by_surah
 from database import get_connection
@@ -96,13 +99,34 @@ def upload_recording():
 
     audio = request.files["audio"]
     
-    from services.recording_service import save_audio_file
+    
 
     filename = save_audio_file(audio)
-    print(filename)
+    
+    surah_id = int(request.form["surah_id"])
+    start_ayah = int(request.form["start_ayah"])
+    end_ayah = int(request.form["end_ayah"])
+    
+    analysis = analyze_recitation(
+            f"uploads/recordings/{filename}",
+            surah_id
+        )
+    
+   
+
+    save_recitation(
+        user_id=session["user_id"],
+        surah_id=surah_id,
+        start_ayah=start_ayah,
+        end_ayah=end_ayah,
+        audio_file=filename,
+        duration=0
+    )   
+    
 
     return jsonify({
         "success": True,
         "message": "Audio uploaded successfully.",
-        "filename": filename
+        "filename": filename,
+        "analysis": analysis
     })                

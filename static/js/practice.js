@@ -45,6 +45,22 @@ stopBtn.addEventListener("click", () => {
     player.style.display = "block";
 
     const formData = new FormData();
+    const startButton = document.getElementById("startRecording");
+
+formData.append(
+    "surah_id",
+    startButton.dataset.surah
+);
+
+formData.append(
+    "start_ayah",
+    startButton.dataset.start
+);
+
+formData.append(
+    "end_ayah",
+    startButton.dataset.end
+);
 
 formData.append(
     "audio",

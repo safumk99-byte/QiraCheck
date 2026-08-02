@@ -30,9 +30,12 @@
 
     <div class="practice-controls">
 
-    <button id="startRecording" class="btn btn-success">
-        🎤 Start Practice
-    </button>
+    <button
+    id="startRecording"
+    class="btn btn-success"
+    data-surah="{{ surah.id }}"
+    data-start="1"
+    data-end="{{ ayahs|length }}">
 
     <button id="stopRecording" class="btn btn-danger" disabled>
         ⏹ Stop
