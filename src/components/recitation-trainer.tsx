@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type CSSProperties, type FormEvent } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from "react";
 
 type Chapter = { id:number; name_simple:string; name_arabic:string; verses_count:number };
 type Verse = { id:number; verse_number:number; verse_key:string; text_uthmani:string };
@@ -26,6 +26,7 @@ export default function RecitationTrainer() {
   const [recording,setRecording]=useState(false);
   const [audioBlob,setAudioBlob]=useState<Blob|null>(null);
   const [audioBusy,setAudioBusy]=useState(false);
+  const recorderRef=useRef<MediaRecorder|null>(null);
 
   useEffect(()=>{ fetch("/api/auth",{cache:"no-store"}).then(r=>r.json()).then(d=>setAuthenticated(Boolean(d.authenticated))).catch(()=>setAuthError("സെർവറുമായി ബന്ധപ്പെടാനായില്ല.")); },[]);
   useEffect(()=>{fetch("/api/quran").then(r=>r.json()).then(d=>{if(Array.isArray(d.chapters))setChapters(d.chapters)}).catch(()=>setError("സൂറ പട്ടിക ലഭ്യമല്ല."));},[]);
@@ -35,7 +36,7 @@ export default function RecitationTrainer() {
   async function login(e:FormEvent){e.preventDefault();setAuthBusy(true);setAuthError("");try{const r=await fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username,password})});const d=await r.json();if(!r.ok)throw new Error(d.error||"ലോഗിൻ പരാജയപ്പെട്ടു.");setAuthenticated(true);setPassword("");}catch(e){setAuthError(e instanceof Error?e.message:"ലോഗിൻ പരാജയപ്പെട്ടു.");}finally{setAuthBusy(false)}}
   async function logout(){await fetch("/api/auth",{method:"DELETE"});setAuthenticated(false);setHistory([]);setResult(null)}
   async function analyze(){setError("");setResult(null);if(!authenticated){setError("ആദ്യം ലോഗിൻ ചെയ്യുക.");return}if(transcript.trim().length<2){setError("വായിച്ച ആയത്തിന്റെ transcript നൽകുക.");return}setBusy(true);try{const r=await fetch("/api/recitation",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({ayahId:chapter+":"+ayah,transcript})});const d=await r.json();if(!r.ok)throw new Error(d.error||"പരിശോധന പരാജയപ്പെട്ടു.");setResult(d.result);setHistory(h=>[d.result.attempt,...h].slice(0,10));}catch(e){setError(e instanceof Error?e.message:"പരിശോധന പരാജയപ്പെട്ടു.");}finally{setBusy(false)}}
-  async function record(){setError("");if(recording){(window as any).__qiraRecorder?.stop();setRecording(false);return}try{const stream=await navigator.mediaDevices.getUserMedia({audio:true});const chunks:BlobPart[]=[];const rec=new MediaRecorder(stream);(window as any).__qiraRecorder=rec;rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};rec.onstop=()=>{setAudioBlob(new Blob(chunks,{type:rec.mimeType||"audio/webm"}));stream.getTracks().forEach(t=>t.stop())};rec.start();setRecording(true)}catch{setError("മൈക്രോഫോൺ അനുമതി അനുവദിച്ച് വീണ്ടും ശ്രമിക്കുക.")}}
+  async function record(){setError("");if(recording){recorderRef.current?.stop();setRecording(false);return}try{const stream=await navigator.mediaDevices.getUserMedia({audio:true});const chunks:BlobPart[]=[];const rec=new MediaRecorder(stream);recorderRef.current=rec;rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};rec.onstop=()=>{setAudioBlob(new Blob(chunks,{type:rec.mimeType||"audio/webm"}));stream.getTracks().forEach(t=>t.stop())};rec.start();setRecording(true)}catch{setError("മൈക്രോഫോൺ അനുമതി അനുവദിച്ച് വീണ്ടും ശ്രമിക്കുക.")}}
   async function transcribe(){if(!audioBlob)return;setAudioBusy(true);setError("");try{const f=new FormData();f.append("audio",audioBlob,"recitation.webm");const r=await fetch("/api/recitation/transcribe",{method:"POST",body:f});const d=await r.json();if(!r.ok)throw new Error(d.error||"ഓഡിയോ തിരിച്ചറിയാനായില്ല.");setTranscript(d.transcript||"");}catch(e){setError(e instanceof Error?e.message:"ട്രാൻസ്ക്രിപ്ഷൻ പരാജയപ്പെട്ടു.");}finally{setAudioBusy(false)}}
 
   if(!authenticated)return <div style={styles.page}><form onSubmit={login} style={styles.login}><div style={styles.mark}>۞</div><p style={styles.kicker}>QIRACHECK · TILĀWAH PRACTICE</p><h1>ഖുർആൻ പാരായണ പരിശീലനം</h1><p style={styles.muted}>പരിശീലന ഫലങ്ങളും ചരിത്രവും കാണാൻ ലോഗിൻ ചെയ്യുക.</p><label>Username<input required value={username} onChange={e=>setUsername(e.target.value)} style={styles.input}/></label><label>Password<input required type="password" value={password} onChange={e=>setPassword(e.target.value)} style={styles.input}/></label>{authError&&<p style={styles.error}>{authError}</p>}<button disabled={authBusy} style={styles.button}>{authBusy?"ലോഗിൻ ചെയ്യുന്നു…":"ലോഗിൻ"}</button><small style={styles.muted}>സെർവർ ക്രമീകരണത്തിൽ APP_USERNAME, APP_PASSWORD, SESSION_SECRET ആവശ്യമാണ്.</small></form></div>;
