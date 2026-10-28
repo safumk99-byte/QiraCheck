@@ -13,8 +13,19 @@ This directory is reserved for a **separate** Quran Muaalem inference deployment
 
 The upstream Quran Muaalem application documents `POST /correct-recitation` with multipart field `file` and optional `error_ratio`. The app and model engine are separate processes in the upstream deployment design (app port 8001, engine port 8000). Confirm the exact response schema against the pinned upstream version before adapting it.
 
-Upstream project: https://github.com/obadx/quran-muaalem  
-API documentation: https://obadx.github.io/quran-muaalem/en/
+- Upstream project: https://github.com/obadx/quran-muaalem
+- API documentation: https://obadx.github.io/quran-muaalem/en/
+
+## Hosting feasibility checked (2026-10-29)
+
+Hugging Face's current Spaces documentation says CPU Basic has no hourly compute charge, but creating/running a Gradio or Docker Space on compute requires a PRO subscription for a personal account (or Team/Enterprise for organizations); free personal accounts have a limited ZeroGPU exception. GPU upgrades are usage-billed unless a grant is approved. Therefore this does **not** currently meet the user's strict no-paid-plan/no-billing-card requirement as a dependable API host.
+
+Official references:
+- https://huggingface.co/docs/hub/spaces-overview
+- https://huggingface.co/docs/hub/spaces-gpus
+- https://huggingface.co/docs/huggingface_hub/main/en/guides/manage-spaces
+
+A temporary free notebook is not a reliable always-on API and may expose private recitation audio if configured carelessly. No new host has been deployed. Do not create a paid service, enable billing, or request paid GPU hardware without explicit approval.
 
 ## Required deployment contract
 
@@ -28,10 +39,6 @@ A production adapter must:
 6. Avoid storing recordings; delete temporary files even when inference fails.
 7. Pin dependencies/model revision and validate output fields with tests.
 8. Be tested with expert-reviewed recordings before any UI presents the output as instructional feedback.
-
-## Hosting constraint
-
-A free CPU web service is not assumed to have the memory, accelerator, or cold-start performance needed for this model. GPU hosts that advertise free credits may become billable when credits run out; they do not satisfy a strict no-billing requirement unless the provider explicitly guarantees a no-charge deployment. Do not deploy this model to the existing Render ASR service or enable production Tajweed calls until a genuinely free, compatible host is confirmed and an end-to-end audio test passes.
 
 ## Web application environment
 
