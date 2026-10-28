@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: qiracheck-asr
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./ai-service/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeployTrigger: commit
+    envVars:
+      - key: ASR_SERVICE_TOKEN
+        sync: false
+      - key: ASR_NUM_THREADS
+        value: "2"
