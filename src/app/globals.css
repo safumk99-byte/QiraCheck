@@ -24,6 +24,6 @@ button { cursor: pointer; }
 .tajweed-chip.tajweed-idgham_wo_ghunnah { background: #2563eb; }
 .tajweed-chip.tajweed-ikhafa { background: #16a34a; }
 .tajweed-chip.tajweed-iqlab { background: #9333ea; }
-.tajweed-chip.tajweed-izhaar { background: #c2410c; }
+.tajweed-chip.tajweed-izhaar, .tajweed-chip.tajweed-idhaar { background: #c2410c; }
 .tajweed-chip.tajweed-qalqalah { background: #dc2626; }
 .tajweed-chip.tajweed-madda_normal { background: #0891b2; }
