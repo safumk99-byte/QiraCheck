@@ -1,12 +1,12 @@
 """Local Quran-specific Arabic speech-to-text service; not a Tajweed grader."""
 from __future__ import annotations
-import os, tempfile
+import hmac, os, tempfile
 from pathlib import Path
 from threading import Lock
 from typing import Any
 import av
 import numpy as np
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, Header, HTTPException, UploadFile
 from huggingface_hub import hf_hub_download
 from pydantic import BaseModel
 
@@ -15,7 +15,7 @@ ALLOWED_SUFFIXES={".webm",".ogg",".wav",".mp3",".m4a",".mp4",".aac",".flac",".mp
 MODEL_REPO=os.getenv("ASR_MODEL_REPO","Abdou/quran-asr-small")
 MODEL_CACHE=os.getenv("ASR_MODEL_CACHE","") or None
 NUM_THREADS=max(1,min(4,int(os.getenv("ASR_NUM_THREADS","2"))))
-app=FastAPI(title="Quran Recitation Local ASR",version="0.2.0")
+app=FastAPI(title="Quran Recitation Local ASR",version="0.3.0")
 _recognizer:Any|None=None
 _model_lock=Lock()
 
@@ -24,6 +24,15 @@ class HealthResponse(BaseModel):
     model:str
     loaded:bool
     purpose:str="Quran-specific Arabic speech-to-text draft only; no independent tajweed grading"
+
+def verify_service_token(authorization: str | None) -> None:
+    expected=os.getenv("ASR_SERVICE_TOKEN","").strip()
+    if len(expected)<32:
+        raise HTTPException(status_code=503,detail="ASR service authentication is not configured.")
+    supplied=authorization or ""
+    scheme, _, token=supplied.partition(" ")
+    if scheme.lower()!="bearer" or not token or not hmac.compare_digest(token,expected):
+        raise HTTPException(status_code=401,detail="Invalid ASR service credentials.")
 
 def get_recognizer()->Any:
     global _recognizer
@@ -64,7 +73,8 @@ def decode_audio_16k_mono(path:str)->np.ndarray:
 def health()->HealthResponse: return HealthResponse(ok=True,model=MODEL_REPO,loaded=_recognizer is not None)
 
 @app.post("/transcribe")
-async def transcribe(audio:UploadFile=File(...))->dict[str,str]:
+async def transcribe(audio:UploadFile=File(...), authorization: str | None = Header(default=None))->dict[str,str]:
+    verify_service_token(authorization)
     suffix=Path(audio.filename or "recitation.webm").suffix.lower()
     if suffix not in ALLOWED_SUFFIXES: raise HTTPException(status_code=415,detail="Unsupported audio format.")
     data=await audio.read(MAX_AUDIO_BYTES+1)
