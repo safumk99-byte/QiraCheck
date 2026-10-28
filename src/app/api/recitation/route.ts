@@ -50,5 +50,5 @@ export async function POST(request:Request){
  try{
   const [attempt]=await db.insert(recitationAttempts).values({surah,ayahNumber:ayah,expectedText:expected,transcript,accuracy:analysis.accuracy,mistakes:analysis.mistakes}).returning();
   return NextResponse.json({result:{...analysis,attempt}},{headers:{"Cache-Control":"no-store, private"}});
- }catch(error){const e=error as {code?:string;message?:string;constraint?:string};console.error("[recitation-save] DB error", {code:e?.code,message:e?.message,constraint:e?.constraint});return NextResponse.json({error:"Could not save this recitation attempt. The database rejected the save; server diagnostics were recorded."},{status:503})}
+ }catch(error){const e=error as {code?:string;message?:string;constraint?:string;cause?:{code?:string;message?:string;constraint?:string;detail?:string;severity?:string}};console.error("[recitation-save] DB error", {code:e?.code,message:e?.message,constraint:e?.constraint,causeCode:e?.cause?.code,causeMessage:e?.cause?.message,causeConstraint:e?.cause?.constraint,causeDetail:e?.cause?.detail,causeSeverity:e?.cause?.severity});return NextResponse.json({error:"Could not save this recitation attempt. The database rejected the save; server diagnostics were recorded."},{status:503})}
 }
