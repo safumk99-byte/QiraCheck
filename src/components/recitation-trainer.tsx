@@ -6,7 +6,7 @@ type Chapter = { id:number; name_simple:string; name_arabic:string; verses_count
 type Verse = { id:number; verse_number:number; verse_key:string; text_uthmani:string };
 type Mistake = { type:"missing"|"wrong"|"extra"; expected?:string; heard?:string; position:number };
 type Attempt = { id:number; surah:string; ayahNumber:number; accuracy:number; createdAt:string };
-type Result = { accuracy:number; normalizedExpected:string; normalizedTranscript:string; mistakes:Mistake[]; attempt?:Attempt };
+type Result = { accuracy:number; normalizedExpected:string; normalizedTranscript:string; mistakes:Mistake[]; attempt:Attempt };
 
 export default function RecitationTrainer() {
   const [chapters,setChapters]=useState<Chapter[]>([]);
