@@ -1,6 +1,7 @@
 gradio>=5.43.1,<6
 spaces>=0.40.0
 librosa>=0.11.0
+numba>=0.61.2
 numpy>=2.2.6
 quran-transcript>=0.6.1
-quran-muaalem==0.2.2
+quran-muaalem[ui]==0.2.2
