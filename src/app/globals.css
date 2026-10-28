@@ -5,3 +5,25 @@
 body { margin: 0; background: var(--paper); color: var(--ink); font-family: Arial, Helvetica, sans-serif; }
 button, input, select { font: inherit; }
 button { cursor: pointer; }
+
+
+.tajweed-panel { margin: -4px 0 20px; padding: 14px 16px; border: 1px solid #dce7df; border-radius: 12px; background: #fbfdfb; }
+.tajweed-panel h3 { margin: 0 0 10px; font-size: 15px; }
+.tajweed-panel p { margin: 12px 0 0; color: #687970; font-size: 12px; line-height: 1.6; }
+.tajweed-legend { display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: 12px; }
+.tajweed-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.tajweed-chip { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
+.tajweed-ghunnah, .tajweed-idgham_ghunnah, .tajweed-ikhafa, .tajweed-ikhafa_shafawi { color: #198754; }
+.tajweed-idgham_wo_ghunnah { color: #2563eb; }
+.tajweed-iqlab { color: #9333ea; }
+.tajweed-izhaar, .tajweed-idhaar, .tajweed-idhaar_shafawi { color: #c2410c; }
+.tajweed-qalqalah { color: #dc2626; }
+.tajweed-madda_normal, .tajweed-madda_permissible, .tajweed-madda_necessary, .tajweed-madda_obligatory { color: #0891b2; }
+.tajweed-ham_wasl, .tajweed-laam_shamsiyah { color: #a16207; }
+.tajweed-chip.tajweed-ghunnah, .tajweed-chip.tajweed-idgham_ghunnah { background: #198754; }
+.tajweed-chip.tajweed-idgham_wo_ghunnah { background: #2563eb; }
+.tajweed-chip.tajweed-ikhafa { background: #16a34a; }
+.tajweed-chip.tajweed-iqlab { background: #9333ea; }
+.tajweed-chip.tajweed-izhaar { background: #c2410c; }
+.tajweed-chip.tajweed-qalqalah { background: #dc2626; }
+.tajweed-chip.tajweed-madda_normal { background: #0891b2; }
