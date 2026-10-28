@@ -1,0 +1,36 @@
+name: QiraCheck V2 checks
+on:
+  push:
+    branches: [ai-quran-recitation-v2]
+  pull_request:
+    branches: [ai-quran-recitation-v2]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/qiracheck_test
+      APP_USERNAME: ci-user
+      APP_PASSWORD: ci-password-long-enough
+      SESSION_SECRET: ci-session-secret-0123456789-abcdefghijklmnopqrstuvwxyz
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run lint
+      - run: npm run build
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m py_compile ai-service/main.py
