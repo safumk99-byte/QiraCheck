@@ -1,11 +1,8 @@
 import os
-import tempfile
-from functools import lru_cache
 
 import gradio as gr
 import librosa
 import spaces
-import torch
 from quran_transcript import Aya, quran_phonetizer, MoshafAttributes
 from quran_muaalem.inference import Muaalem
 from quran_muaalem.explain_gradio import explain_for_gradio
@@ -60,7 +57,7 @@ def analyze(audio_path, surah, ayah, first_word, word_count):
             phonetic_reference.phonemes,
             output.sifat,
             phonetic_reference.sifat,
-            lang="english",
+            lang="arabic",
         )
     except gr.Error:
         raise
