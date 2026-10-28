@@ -5,13 +5,12 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
 const MAX_AUDIO_BYTES = 12 * 1024 * 1024;
-const MAX_REFERENCE_CHARS = 2000;
 
 /**
- * Secure proxy for the separately hosted Quran Muaalem/Tajweed evaluator.
- * Contract: multipart fields audio, chapter, ayah, reference_text.
- * The evaluator must return JSON with summary and findings; no ASR transcript
- * match score is presented as a Tajweed score.
+ * Secure proxy for a separately hosted Quran Muaalem app server.
+ * The upstream /correct-recitation contract accepts multipart "file" and
+ * "error_ratio" fields and returns a Quran span plus phoneme/tajweed errors.
+ * This is intentionally separate from the existing transcript-only ASR route.
  */
 export async function POST(request: Request) {
   if (!isAuthenticated(request)) return unauthorizedResponse();
@@ -20,7 +19,7 @@ export async function POST(request: Request) {
   const serviceToken = process.env.QURAN_TAJWEED_SERVICE_TOKEN?.trim();
   if (!serviceUrl) {
     return NextResponse.json(
-      { error: "ഓഡിയോ തജ്‌വീദ് പരിശോധനാ സേവനം ഇതുവരെ ക്രമീകരിച്ചിട്ടില്ല. നിലവിലെ transcript score തജ്‌വീദ് പരിശോധനയല്ല." },
+      { error: "ഓഡിയോ തജ്‌വീദ് പരിശോധനാ സേവനം ഇതുവരെ ക്രമീകരിച്ചിട്ടില്ല. നിലവിലെ transcript പരിശോധന തജ്‌വീദ് വിലയിരുത്തലല്ല." },
       { status: 503 },
     );
   }
@@ -36,35 +35,22 @@ export async function POST(request: Request) {
   }
 
   const audio = incoming.get("audio");
-  const chapter = Number(incoming.get("chapter"));
-  const ayah = Number(incoming.get("ayah"));
-  const referenceText = incoming.get("reference_text");
-
   if (!(audio instanceof File) || audio.size === 0) {
     return NextResponse.json({ error: "ആദ്യം റെക്കോർഡിംഗ് ചെയ്യുക." }, { status: 400 });
   }
   if (audio.size > MAX_AUDIO_BYTES) {
     return NextResponse.json({ error: "ഓഡിയോ ഫയൽ 12 MB-ൽ താഴെയായിരിക്കണം." }, { status: 413 });
   }
-  if (!Number.isInteger(chapter) || chapter < 1 || chapter > 114 ||
-      !Number.isInteger(ayah) || ayah < 1) {
-    return NextResponse.json({ error: "സൂറത്തും ആയത്തും ശരിയായി തിരഞ്ഞെടുക്കുക." }, { status: 400 });
-  }
-  if (typeof referenceText !== "string" || !referenceText.trim() || referenceText.length > MAX_REFERENCE_CHARS) {
-    return NextResponse.json({ error: "തിരഞ്ഞെടുത്ത ആയത്തിന്റെ ഖുർആൻ ടെക്സ്റ്റ് ലഭ്യമല്ല." }, { status: 400 });
-  }
   if (!audio.type.startsWith("audio/") && audio.type !== "application/octet-stream") {
     return NextResponse.json({ error: "Unsupported audio format." }, { status: 415 });
   }
 
   const outbound = new FormData();
-  outbound.append("audio", audio, audio.name || "recitation.webm");
-  outbound.append("chapter", String(chapter));
-  outbound.append("ayah", String(ayah));
-  outbound.append("reference_text", referenceText);
+  outbound.append("file", audio, audio.name || "recitation.webm");
+  outbound.append("error_ratio", "0.1");
 
   try {
-    const upstream = await fetch(`${serviceUrl.replace(/\/$/, "")}/analyze-tajweed`, {
+    const upstream = await fetch(`${serviceUrl.replace(/\/$/, "")}/correct-recitation`, {
       method: "POST",
       body: outbound,
       headers: { Authorization: `Bearer ${serviceToken}` },
@@ -72,7 +58,9 @@ export async function POST(request: Request) {
       signal: AbortSignal.timeout(110000),
     });
     const payload = await upstream.json().catch(() => null) as {
-      summary?: unknown; findings?: unknown; error?: unknown; detail?: unknown;
+      start?: unknown; end?: unknown; uthmani_text?: unknown;
+      predicted_phonemes?: unknown; reference_phonemes?: unknown; errors?: unknown;
+      detail?: unknown; error?: unknown;
     } | null;
 
     if (!upstream.ok) {
@@ -80,23 +68,42 @@ export async function POST(request: Request) {
         typeof payload?.detail === "string" ? payload.detail : "തജ്‌വീദ് പരിശോധന പരാജയപ്പെട്ടു.";
       return NextResponse.json({ error: message }, { status: upstream.status >= 500 ? 502 : upstream.status });
     }
-    if (!payload || typeof payload.summary !== "string" || !Array.isArray(payload.findings)) {
+    if (!payload || !Array.isArray(payload.errors) || typeof payload.uthmani_text !== "string") {
       return NextResponse.json({ error: "Tajweed service returned an unsupported response format." }, { status: 502 });
     }
+
+    const errors = payload.errors.slice(0, 100).map((item: unknown) => {
+      if (!item || typeof item !== "object") return null;
+      const e = item as Record<string, unknown>;
+      const rules = Array.isArray(e.ref_tajweed_rules) ? e.ref_tajweed_rules : [];
+      const ruleNames = rules.map((rule: unknown) => {
+        if (!rule || typeof rule !== "object") return "";
+        const name = (rule as Record<string, unknown>).name;
+        if (name && typeof name === "object") {
+          const n = name as Record<string, unknown>;
+          return typeof n.en === "string" ? n.en : typeof n.ar === "string" ? n.ar : "";
+        }
+        return "";
+      }).filter(Boolean);
+      return {
+        type: typeof e.error_type === "string" ? e.error_type : "recitation",
+        speechErrorType: typeof e.speech_error_type === "string" ? e.speech_error_type : "",
+        expected: typeof e.expected_ph === "string" ? e.expected_ph : "",
+        detected: typeof e.preditected_ph === "string" ? e.preditected_ph : "",
+        rule: ruleNames.join(", ") || "ഉച്ചാരണ/തജ്‌വീദ് വ്യത്യാസം",
+        position: Array.isArray(e.uthmani_pos) ? e.uthmani_pos.slice(0, 2) : [],
+      };
+    }).filter(Boolean);
+
     return NextResponse.json({
-      summary: payload.summary.slice(0, 1000),
-      findings: payload.findings.slice(0, 100).map((item: unknown) => {
-        if (!item || typeof item !== "object") return null;
-        const f = item as Record<string, unknown>;
-        return {
-          rule: typeof f.rule === "string" ? f.rule.slice(0, 80) : "Tajweed rule",
-          location: typeof f.location === "string" ? f.location.slice(0, 160) : "",
-          feedback: typeof f.feedback === "string" ? f.feedback.slice(0, 500) : "",
-          severity: f.severity === "high" || f.severity === "medium" ? f.severity : "low",
-        };
-      }).filter(Boolean),
-      model: "Quran Muaalem-compatible service",
-      notice: "AI സഹായക വിലയിരുത്തലാണ്; യോഗ്യനായ അധ്യാപകന്റെ പരിശോധനയ്ക്ക് പകരമല്ല.",
+      verseText: payload.uthmani_text.slice(0, 1000),
+      errors,
+      errorCount: errors.length,
+      predictedPhonemes: typeof payload.predicted_phonemes === "string" ? payload.predicted_phonemes.slice(0, 2000) : "",
+      referencePhonemes: typeof payload.reference_phonemes === "string" ? payload.reference_phonemes.slice(0, 2000) : "",
+      location: { start: payload.start ?? null, end: payload.end ?? null },
+      model: "Quran Muaalem",
+      notice: "AI സഹായക വിലയിരുത്തലാണ്; യോഗ്യനായ ഖുർആൻ അധ്യാപകന്റെ പരിശോധനയ്ക്ക് പകരമല്ല.",
     }, { headers: { "Cache-Control": "no-store, private" } });
   } catch (error) {
     return NextResponse.json({
