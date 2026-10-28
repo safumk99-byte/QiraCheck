@@ -1,6 +1,6 @@
 # AI Qur’an Recitation Corrector — current implementation
 
-This is a Next.js + PostgreSQL practice app. It loads Qur’an reference text, supports browser speech recognition and an optional self-hosted local Arabic ASR service, compares a transcript with the selected verse, and stores recent attempts.
+This is a Next.js + PostgreSQL practice app. It loads Qur’an reference text, supports browser audio recording and an optional self-hosted local Arabic ASR service, compares a transcript with the selected verse, and stores recent attempts.
 
 ## Important capability boundary
 
